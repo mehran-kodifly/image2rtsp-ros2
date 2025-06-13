@@ -36,6 +36,7 @@ rtsp://<edge_ip>:8557/cam2
 import os
 import yaml
 from typing import List
+from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, LogInfo
@@ -47,6 +48,7 @@ def _load_config(cfg_path: str) -> dict:
         raise FileNotFoundError(f"camera_config file not found: {cfg_path}")
     with open(cfg_path, "r") as f:
         return yaml.safe_load(f)
+
 
 
 def _create_nodes(context, *_) -> List[Node]:
@@ -66,7 +68,7 @@ def _create_nodes(context, *_) -> List[Node]:
         launch_entities.append(
             Node(
                 package="image2rtsp",
-                executable="image2rtsp_node",
+                executable="image2rtsp",
                 name=f"image2rtsp_{serial}",
                 parameters=[{
                     "topic": topic,
@@ -86,11 +88,16 @@ def _create_nodes(context, *_) -> List[Node]:
     return launch_entities
 
 
+
+
 def generate_launch_description() -> LaunchDescription:
-    config_arg = DeclareLaunchArgument(
+    DeclareLaunchArgument(
         "camera_config",
-        default_value=os.path.expanduser("~/workspaces/RTSP/config/camera_config.yaml"),
-        description="Path to YAML file that lists camera serials and RTSP settings",
+        default_value=os.path.join(
+            get_package_share_directory("image2rtsp"),
+            "config",
+            "camera_config.yaml",
+        ),
     )
 
     return LaunchDescription([

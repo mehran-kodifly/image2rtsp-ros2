@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
-"""Multi-camera RTSP launch file for *image2rtsp*
+"""
+Multi-camera RTSP launch file for *image2rtsp*.
 
-• Reads a YAML file (**camera_config.yaml**) that lists camera serials
-  → ROS topic → RTSP port / mount-point.
-• Spawns **one `image2rtsp` node per camera**.
+✔ Reads `camera_config.yaml` and spins up one `image2rtsp` node per camera.
+✔ Passes correct parameters (topic, mount_point, port, use_compressed) to each node.
+✔ Ensures `port` is **string-typed** to match the node's declared type.
 
-YAML schema example:
+YAML schema:
 ```yaml
-base_port: 8556            # optional, default 8556
+base_port: 8556
 cameras:
-  - serial: DA3614748      # required
-    topic: /hikrobot/DA3614748/compressed   # optional, auto-filled if absent
-    mount_point: cam1      # optional, default cam<index>
-    port: 8556             # optional, auto-increments when absent
+  - serial: DA3614748
+    topic: /hikrobot/DA3614748/compressed   # optional; auto-filled if absent
+    mount_point: cam1                      # optional; default cam<index>
+    port: 8556                             # optional; auto‑increments if absent
   - serial: DA4930148
-    # … repeat for as many cameras as needed
+    # … more cameras
 ```
 
 Usage:
 ```bash
-ros2 launch image2rtsp multi_camera_rtsp_launch.py \
-    camera_config:=/absolute/path/to/camera_config.yaml
+ros2 launch image2rtsp multicamera_rtsp.py \\
+  camera_config:=/absolute/path/to/camera_config.yaml
 ```
-If *camera_config* is omitted, the launch file falls back to
+If `camera_config` is omitted, the launch file falls back to
 `<package_share>/config/camera_config.yaml`.
 """
 
@@ -37,13 +38,20 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
+# -----------------------------------------------------------------------------
+# Helper: load YAML safely
+# -----------------------------------------------------------------------------
+
 def _load_yaml(path: str) -> dict:
-    """Safely load the YAML camera-config file."""
     if not os.path.exists(path):
         raise FileNotFoundError(f"camera_config file not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
+
+# -----------------------------------------------------------------------------
+# Create one image2rtsp Node per camera
+# -----------------------------------------------------------------------------
 
 def _spawn_nodes(context, *_) -> List[Node]:
     cfg_path = LaunchConfiguration("camera_config").perform(context)
@@ -59,32 +67,34 @@ def _spawn_nodes(context, *_) -> List[Node]:
         port = cam.get("port", base_port + idx)
         mount = cam.get("mount_point", f"cam{idx + 1}")
 
-        # Spawn one image2rtsp node per camera
         entities.append(
             Node(
                 package="image2rtsp",
-                executable="image2rtsp",
+                executable="image2rtsp",       # console_script name
                 name=f"image2rtsp_{serial}",
                 parameters=[{
                     "topic": topic,
-                    "port": port,
+                    "port": str(port),         # ensure type is string
                     "mount_point": mount,
                     "use_compressed": True,
                 }],
                 output="screen",
             )
         )
-
-        # Log the resulting RTSP URL
         entities.append(
-            LogInfo(msg=f"[multi_cam_rtsp] {serial} ➜ rtsp://<edge_ip>:{port}/{mount}")
+            LogInfo(
+                msg=f"[multi_cam_rtsp] {serial} ➜ rtsp://<edge_ip>:{port}/{mount}"
+            )
         )
 
     return entities
 
 
+# -----------------------------------------------------------------------------
+# Launch description entry‑point
+# -----------------------------------------------------------------------------
+
 def generate_launch_description() -> LaunchDescription:
-    """Entry point for the ROS 2 launch system."""
     default_cfg = os.path.join(
         get_package_share_directory("image2rtsp"),
         "config",

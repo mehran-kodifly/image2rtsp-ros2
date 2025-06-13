@@ -1,0 +1,26 @@
+base_port: 8556
+cameras:
+- serial: DA3614748
+  mount_point: cam1
+  port: 8556
+  topic: /hikrobot/DA3614748/compressed
+- serial: DA4930148
+  mount_point: cam2
+  port: 8557
+  topic: /hikrobot/DA4930148/compressed
+- serial: DA5148680
+  mount_point: cam3
+  port: 8558
+  topic: /hikrobot/DA5148680/compressed
+- serial: DA5148683
+  mount_point: cam4
+  port: 8559
+  topic: /hikrobot/DA5148683/compressed
+- serial: DA5324645
+  mount_point: cam5
+  port: 8560
+  topic: /hikrobot/DA5324645/compressed
+- serial: DA5324655
+  mount_point: cam6
+  port: 8561
+  topic: /hikrobot/DA5324655/compressed

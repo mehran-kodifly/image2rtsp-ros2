@@ -63,17 +63,18 @@ def _spawn_nodes(context, *_) -> List[Node]:
         entities.append(
             Node(
                 package="image2rtsp",
-                executable="image2rtsp",  # matches console_script entry point
+                executable="image2rtsp",
                 name=f"image2rtsp_{serial}",
                 parameters=[{
                     "topic": topic,
-                    "port": str(port),  # convert to string to match node's declared type
+                    "port": port,
                     "mount_point": mount,
                     "use_compressed": True,
                 }],
                 output="screen",
             )
         )
+
         # Log the resulting RTSP URL
         entities.append(
             LogInfo(msg=f"[multi_cam_rtsp] {serial} ➜ rtsp://<edge_ip>:{port}/{mount}")

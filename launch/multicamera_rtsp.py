@@ -2,7 +2,7 @@
 """Multi-camera RTSP launch file for *image2rtsp*
 
 • Reads a YAML file (**camera_config.yaml**) that lists camera serials
-  → ROS topic → RTSP port / mount‑point.
+  → ROS topic → RTSP port / mount-point.
 • Spawns **one `image2rtsp` node per camera**.
 
 YAML schema example:
@@ -10,9 +10,9 @@ YAML schema example:
 base_port: 8556            # optional, default 8556
 cameras:
   - serial: DA3614748      # required
-    topic: /hikrobot/DA3614748/compressed   # optional, auto‑filled if absent
+    topic: /hikrobot/DA3614748/compressed   # optional, auto-filled if absent
     mount_point: cam1      # optional, default cam<index>
-    port: 8556             # optional, auto‑increments when absent
+    port: 8556             # optional, auto-increments when absent
   - serial: DA4930148
     # … repeat for as many cameras as needed
 ```
@@ -38,7 +38,7 @@ from launch_ros.actions import Node
 
 
 def _load_yaml(path: str) -> dict:
-    """Safely load the YAML camera‑config file."""
+    """Safely load the YAML camera-config file."""
     if not os.path.exists(path):
         raise FileNotFoundError(f"camera_config file not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
@@ -67,7 +67,7 @@ def _spawn_nodes(context, *_) -> List[Node]:
                 name=f"image2rtsp_{serial}",
                 parameters=[{
                     "topic": topic,
-                    "port": port,
+                    "port": str(port),  # convert to string to match node's declared type
                     "mount_point": mount,
                     "use_compressed": True,
                 }],
@@ -83,7 +83,7 @@ def _spawn_nodes(context, *_) -> List[Node]:
 
 
 def generate_launch_description() -> LaunchDescription:
-    """Entry point for the ROS 2 launch system."""
+    """Entry point for the ROS 2 launch system."""
     default_cfg = os.path.join(
         get_package_share_directory("image2rtsp"),
         "config",
